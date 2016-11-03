@@ -1,0 +1,155 @@
+---
+title: "AnnotationHub and GRanges Usecase"
+author: "Sharonhe"
+date: "November 2, 2016"
+output: html_document
+---
+
+This is a project to look for H3K4 trimethylation in gene promoters.
+
+--
+Dependencies
+--
+
+```{r}
+library(GenomicRanges)
+library(rtracklayer)
+library(AnnotationHub)
+```
+
+--
+Strategy
+--
+
+1. Getting the ENCODE histone data using AnnotationHub.
+2. Getting promoters using AnnotationHub.
+3. Comparing the histone data and promoters using findOverlaps in GenomicRanges.
+
+--
+Getting the ENCODE histone data using AnnotationHub
+--
+
+```{r}
+ah <- AnnotationHub()
+ah <- subset(ah, species == "Homo sapiens")
+qhs <- query(ah, "H3K4me3")
+qhs <- query(qhs, "Gm12878")
+qhs
+
+```
+
+Let's take a close look at the data
+
+```{r}
+qhs$title
+qhs$dataprovider
+```
+
+Retrieve the ENCODE narrowpeak data
+
+```[r]
+gr1 <- subset(qhs, title == "wgEncodeUwHistoneGm12878H3k4me3StdPkRep1.narrowPeak.gz")[[1]]
+gr1
+```
+Retrieve the Broad narrowpeak data
+
+```{r}
+gr2 <- subset(qhs, title == "E116-H3K4me3.narrowPeak.gz")[[1]]
+gr2
+```
+
+Look at the distribution of peak widths:
+
+```{r}
+summary(width(gr1))
+table(width(gr1))
+summary(width(gr2))
+table(width(gr2))
+```
+
+In this project, we will stick with gr1 (from ENCODE).
+
+--
+Getting promoters using AnnotationHub
+--
+
+Next we need to get some promoter coordinates. RefSeq is a highly curated collection of genes.
+
+```{r}
+qhs <- query(ah, "RefSeq")
+qhs
+qhs$genome
+```
+
+This looks like the same resources, but in different genome builds.
+
+so we know which one to get:
+
+```{r}
+refseq <- qhs[qhs$genome == "hg19" & qhs$title == "RefSeq Genes"]
+refseq
+refseq <- refseq[[1]] ## Download the referene genome
+refseq
+```
+
+```{r}
+table(table(refseq$name)) ## look at the number of isoforms per gene name
+```
+
+Getting the promoters in Refseq
+
+```{r}
+promoters <- promoters(refseq)
+table(width(promoters)) ## The default in this function is to use 2kb upstream and 200bp downstream of the start site.
+```
+
+--
+Comparing the histone data and promoters using findOverlaps in GenomicRanges.
+--
+
+```{r}
+ov <- findOverlaps(promoters, gr1)
+ov
+```
+
+Compute how many percent of the peaks are in a promoter:
+
+```{r}
+length(unique(queryHits(ov))) / length(gr1)
+```
+
+Compute how many percent of promoters have a peak in them:
+
+```{r}
+length(unique(subjectHits(ov))) / length(promoters)
+```
+
+Compute a small 2x2 matrix for which bases are in promoters and/or peaks:
+
+```{r}
+prom <- reduce(promoters, ignore.strand = TRUE)
+peaks <- reduce(gr1)
+both <- intersect(prom, peaks)
+only.prom <- setdiff(prom, both)
+only.peaks <- setdiff(peaks, both)
+overlapMat <- matrix(0,, ncol = 2, nrow = 2)
+colnames(overlapMat) <- c("in.peaks", "out.peaks")
+rownames(overlapMat) <- c("in.promoters", "out.promoter")
+overlapMat[1,1] <- sum(width(both))
+overlapMat[1,2] <- sum(width(only.prom))
+overlapMat[2,1] <- sum(width(only.peaks))
+overlapMat[2,2] <- 3*10^9 - sum(overlapMat)
+round(overlapMat / 10^6, 2)
+```
+
+Compute an odds-ratio for the 2x2 table:
+
+```{r}
+oddsRatio <- overlapMat[1,1] * overlapMat[2,2] / (overlapMat[2,1] * overlapMat[1,2])
+oddsRatio
+```
+
+The result shows that this odds ratio is bigger than 1, which means that it shows an enrichment of peaks in promoters.
+
+
+
