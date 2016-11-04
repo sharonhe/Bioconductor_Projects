@@ -5,8 +5,6 @@ date: "November 2, 2016"
 output: html_document
 ---
 
-This is a project to look for H3K4 trimethylation in gene promoters.
-
 --
 Dependencies
 --
@@ -16,6 +14,10 @@ library(GenomicRanges)
 library(rtracklayer)
 library(AnnotationHub)
 ```
+
+---
+Project 1: H3K4 trimethylation in gene promoters.
+---
 
 --
 Strategy
@@ -151,5 +153,53 @@ oddsRatio
 
 The result shows that this odds ratio is bigger than 1, which means that it shows an enrichment of peaks in promoters.
 
+---
+Project 2: CpG islands in Human genome
+---
 
+# Use the AnnotationHub package to obtain data on "CpG Islands" in the human genome.
+
+```{r}
+ah <- AnnotationHub()
+ah <- subset(ah, species == "Homo sapiens")
+qhs <- query(ah, "CpG")
+qhs$title
+qhs$dataprovider
+qhs$genome
+ah_human_CpG_data <- qhs[["AH5086"]]
+```
+
+# summary info about CpG island dataset
+
+```{r}
+summary(width(ah_human_CpG_data))
+seqinfo(ah_human_CpG_data)
+seqlevels(ah_human_CpG_data)
+gaps(ah_human_CpG_data)
+```
+
+# reduce data
+```{r}
+ah_human_CpG_reduce <- reduce(ah_human_CpG_data)
+ah_human_CpG_reduce
+```
+
+# Calculate the islands exists on the autosomes
+
+```{r}
+autosome <- c(paste("chr", 1:22, sep=""))
+split_data_by_chr <- split(ah_human_CpG_reduce, seqnames(ah_human_CpG_reduce))
+autosome_CpG_data <- split_data_by_chr[autosome]
+seqlevels(autosome_CpG_data)
+
+# CpG Islands on autosome
+unlist(autosome_CpG_data)
+
+# CpG Islands on chr4
+autosome_CpG_data[4]
+```
+
+---
+Project 3: H3K4me3 histone modification for the H1 cell line
+---
 
