@@ -203,3 +203,38 @@ autosome_CpG_data[4]
 Project 3: H3K4me3 histone modification for the H1 cell line
 ---
 
+# Obtain the data for the H3K4me3 histone modification for the H1 cell line from Epigenomics Roadmap, using AnnotationHub.
+
+```{r}
+# To find out the EID for H1 cells in Epigenomics Roadmap project
+metadata.tab <- query(ah , c("EpigenomeRoadMap", "Metadata"))
+metadata.tab
+metadata.tab <- ah[["AH41830"]]
+metadata.tab[1:6, 1:5]
+# So E003 is the EID for H1 cell line
+```
+
+```{r}
+ah_H3K4me <- query(ah, c("H3K4me3", "E003"))
+ah_H3K4me_data <- ah_H3K4me[["AH29884"]]
+seqinfo(ah_H3K4me_data)
+seqlevels(ah_H3K4me_data)
+```
+
+# Subset autosome data
+
+```{r}
+autosome <- c(paste("chr", 1:22, sep=""))
+ah_H3K4me_autosome_data <- subset(ah_H3K4me_data, seqnames %in% autosome)
+```
+
+# count base pairs these regions cover
+
+```{r}
+sum(width(unlist(ah_H3K4me_autosome_data)))
+```
+
+
+
+
+
