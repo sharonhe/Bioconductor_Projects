@@ -234,6 +234,49 @@ ah_H3K4me_autosome_data <- subset(ah_H3K4me_data, seqnames %in% autosome)
 sum(width(unlist(ah_H3K4me_autosome_data)))
 ```
 
+---
+Project 4: H3K27me3 histone modification for the H1 cell line
+---
+
+# Obtain the data for the H3K27me3 histone modification for the H1 cell line from Epigenomics Roadmap, using the AnnotationHub package. 
+
+```{r}
+ah_H3K27me3 <- query(ah, c("H3K27me3", "narrowPeak", "E003")) # keywords are based on the investigation in project 3
+ah_H3K27me3
+# retrieve data
+ah_H3K27me3_data <- ah_H3K27me3[["AH29892"]]
+# get data information
+summary(width(ah_H3K27me3_data))
+seqlevels(ah_H3K27me3_data)
+seqinfo(ah_H3K27me3_data)
+```
+
+# Subset these regions to only keep regions mapped to the autosomes. 
+
+```{r}
+autosome <- c(paste("chr", 1:22, sep=""))
+ah_H3K27me3_autosome_data <- subset(ah_H3K27me3_data, seqnames %in% autosome)
+```
+
+# calculate mean signalValue
+
+```{r}
+ah_H3K27me3_autosome_data_mean <- mean(ah_H3K27me3_autosome_data$signalValue)
+ah_H3K27me3_autosome_data_mean
+```
+
+---
+Project 5: Overlaps of bivalent regions with CpG islands
+---
+
+Bivalent regions are bound by both H3K4me3 and H3K27me3. 
+
+# According to project 3 and 4, calculate the bases on the standard chromosomes that are bivalently marked. 
+
+```{r}
+bivalent_data <- intersect(unlist(ah_H3K4me_autosome_data), unlist(ah_H3K27me3_autosome_data))
+sum(width(reduce(bivalent_data)))
+```
 
 
 
