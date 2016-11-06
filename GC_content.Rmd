@@ -72,11 +72,46 @@ totalBase <- letterFrequency(Hsapiens$chr22, "A") +
 gcBase <- letterFrequency(Hsapiens$chr22, "GC")
 ```
 
-#calculate GC ratio on chr22
+# calculate GC ratio on chr22
 
 ```{r}
 gcContent <- gcBase/totalBase
 gcContent
 ```
+
+# Project 3: Compute the mean GC content of H3K27me3 “narrowPeak” regions from Epigenomics Roadmap from the H1 stem cell line on chr 22.
+
+## getting data of H3K27me3 “narrowPeak” regions from Epigenomics Roadmap
+
+```{r}
+ah <- AnnotationHub()
+H3K27me3_qh <- query(ah, c("H3K27me3", "E003", "narrowPeak"))
+H3K27me3_qh
+H3K27me3_data <- H3K27me3_qh[["AH29892"]] # retrieve data
+```
+
+## get genomic ranges on chr22 from the above epigenetic data 
+
+```{r}
+H3K27me3_data.chr22 <- subset(H3K27me3_data, seqnames == "chr22")
+```
+
+## get the corresponding DNA sequence
+
+```{r}
+library(BSgenome.Hsapiens.UCSC.hg19)
+Hsapiens
+H3K27me3_data.chr22.seq <- Views(Hsapiens, H3K27me3_data.chr22)
+```
+
+# calculate GC content on chr22
+
+```{r}
+gcContents <- letterFrequency(H3K27me3_data.chr22.seq, "GC", as.prob = T)
+meanGcContents <- mean(gcContents)
+meanGcContents
+```
+
+
 
 sessioninfor()
