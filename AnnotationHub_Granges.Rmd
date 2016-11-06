@@ -278,6 +278,30 @@ bivalent_data <- intersect(unlist(ah_H3K4me_autosome_data), unlist(ah_H3K27me3_a
 sum(width(reduce(bivalent_data)))
 ```
 
+# Calculate the fraction of the bivalent regions, overlap one or more CpG Islands.
+
+```{r}
+CpG_bivalent_data <- findOverlaps(bivalent_data, unlist(autosome_CpG_data))
+fraction_bi <- length(unique(queryHits(CpG_bivalent_data)))/length(bivalent_data)
+fraction_bi
+```
+
+# Calculate the fraction of the bases which are part of CpG Islands, are also bivalent marked. 
+
+```{r}
+ov_CpG_bivalent <- intersect(bivalent_data, unlist(autosome_CpG_data))
+fraction_CpG <- sum(width(reduce(ov_CpG_bivalent)))/sum(width(unlist(autosome_CpG_data)))
+fraction_CpG
+```
+
+# Calculate bases that are bivalently marked within 10kb of CpG Islands?
+
+```{r}
+autosome_CpG_data
+CpG_10k <- resize(unlist(autosome_CpG_data), width = 20000 + width(unlist(autosome_CpG_data)), fix = "center")
+CpG_10k_bivalent <- intersect(CpG_10k, bivalent_data)
+sum(width(CpG_10k_bivalent))
+```
 
 
 

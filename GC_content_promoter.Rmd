@@ -1,0 +1,49 @@
+---
+title: "GC content of promoters"
+author: "Sharonhe"
+date: "November 5, 2016"
+output: html_document
+---
+
+The purpose of this project is to compute the GC content of promoters in the yeast genome. 
+
+# Dependencies
+library(AnnotationHub)
+library(BSgenome)
+
+# Get yeast genome
+```{r}
+library("BSgenome.Scerevisiae.UCSC.sacCer2")
+Scerevisiae
+```
+
+
+# Get promoter ranges of yeast genome
+
+```{r}
+ahub = AnnotationHub()
+qh = query(ahub, c("sacCer2", "genes"))
+qh
+genes = ahub[["AH7048"]]
+prom = promoters(genes)
+# There is warning messages here because G ranges complain when it gets like genome indices that are less than zero. This problem can be solved by trimming promoters
+prom = trim(prom)
+prom
+```
+
+# View the promoter
+
+```{r}
+promViews = Views(Scerevisiae, prom)
+```
+
+
+# Get GC content in the promoter and make a density plot
+
+```{r}
+gcProm = letterFrequency(promViews, "GC", as.prob = TRUE)
+plot(density(gcProm))
+abline(v = 0.38)
+```
+
+sessioninfor()
