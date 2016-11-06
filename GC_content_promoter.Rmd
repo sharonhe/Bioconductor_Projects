@@ -1,24 +1,24 @@
 ---
-title: "GC content of promoters"
+title: "GC content"
 author: "Sharonhe"
 date: "November 5, 2016"
 output: html_document
 ---
 
-The purpose of this project is to compute the GC content of promoters in the yeast genome. 
-
 # Dependencies
 library(AnnotationHub)
 library(BSgenome)
 
-# Get yeast genome
+# Project 1: compute the GC content of promoters in the yeast genome. 
+
+## Get yeast genome
 ```{r}
 library("BSgenome.Scerevisiae.UCSC.sacCer2")
 Scerevisiae
 ```
 
 
-# Get promoter ranges of yeast genome
+## Get promoter ranges of yeast genome
 
 ```{r}
 ahub = AnnotationHub()
@@ -31,19 +31,52 @@ prom = trim(prom)
 prom
 ```
 
-# View the promoter
+## View the promoter
 
 ```{r}
 promViews = Views(Scerevisiae, prom)
 ```
 
 
-# Get GC content in the promoter and make a density plot
+## Get GC content in the promoter and make a density plot
 
 ```{r}
 gcProm = letterFrequency(promViews, "GC", as.prob = TRUE)
 plot(density(gcProm))
 abline(v = 0.38)
+```
+
+# Project 2: Compute the GC content of “chr22” in the “hg19” build of the human genome
+
+## Get hg19 human genome
+
+```{r}
+source("https://bioconductor.org/biocLite.R")
+biocLite("BSgenome.Hsapiens.UCSC.hg19")
+library(BSgenome.Hsapiens.UCSC.hg19)
+Hsapiens
+```
+
+# count total bases on chr22
+
+```{r}
+totalBase <- letterFrequency(Hsapiens$chr22, "A") +
+             letterFrequency(Hsapiens$chr22, "C") +
+             letterFrequency(Hsapiens$chr22, "G") +
+             letterFrequency(Hsapiens$chr22, "T")
+```
+
+# count GC bases on chr22  
+
+```{r}
+gcBase <- letterFrequency(Hsapiens$chr22, "GC")
+```
+
+#calculate GC ratio on chr22
+
+```{r}
+gcContent <- gcBase/totalBase
+gcContent
 ```
 
 sessioninfor()
