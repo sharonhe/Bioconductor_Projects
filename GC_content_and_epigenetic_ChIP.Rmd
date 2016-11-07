@@ -9,6 +9,7 @@ output: html_document
 library(AnnotationHub)
 library(BSgenome)
 library(rtracklayer)
+library(GenomicFeatures)
 
 # Project 1: compute the GC content of promoters in the yeast genome. 
 
@@ -199,20 +200,20 @@ inter_region <- intersect(region_E003, region_E055)
 sum(width(inter_region))
 ```
 
-# Compute the average observed-to-expected ratio of CpG dinucleotides for CpG Islands on chromosome 22 in hg19
+# Project 6: Compute the average observed-to-expected ratio of CpG dinucleotides for CpG Islands on chromosome 22 in hg19
 
 CpG Islands are dense clusters of CpGs. The classic definition of a CpG Island compares the observed to the expected frequencies of CpG dinucleotides as well as the GC content.
 
 Specifically, the observed CpG frequency is just the number of “CG” dinucleotides in a region divided by the length of the region. The expected CpG frequency is defined as the frequency of C multiplied by the frequency of G divided by the length of the region.
 
-# get hg19 CpG dataset
+## get hg19 CpG dataset
 
 ```{r}
 CpGIsland <- query(ah, c("hg19", "CpG Islands"))
 CpGIsland_data <- CpGIsland[["AH5086"]]
 ```
 
-# subset and view genome data on chr22
+## subset and view genome data on chr22
 
 ```{r}
 CpGIsland_data.chr22 <- subset(CpGIsland_data, seqnames == "chr22")
@@ -221,13 +222,59 @@ Hsapiens
 CpGIsland_data.chr22.vi <- Views(Hsapiens, CpGIsland_data.chr22)
 ```
 
-# calculate observed GC bases (the number of “CG” dinucleotides in a region)
+## calculate observed GC bases (the number of “CG” dinucleotides in a region)
 
 ```{r}
 region_length <- width(CpGIsland_data.chr22.vi)
 observed_gcBase <- dinucleotideFrequency(CpGIsland_data.chr22.vi)[,7]/region_length
 ```
 
+
+# Project 7: TATA box in human genome
+
+## Compute the number of TATA boxes on chr 22 of build hg19 of the human genome
+
+A TATA box is a DNA element of the form “TATAAA”. Around 25% of genes should have a TATA box in their promoter. In this project we need to remember to search both forward and reverse strands.
+
+```{r}
+library(BSgenome.Hsapiens.UCSC.hg19)
+TATA_boxes <- countPattern("TATAAA", Hsapiens$chr22) + countPattern("TATAAA", reverseComplement(Hsapiens$chr22))
+TATA_boxes
+```
+
+## Compute how many promoters of transcripts on chromosome 22 containing a coding sequence, contains a TATA box on the same strand as the transcript
+
+Use the TxDb.Hsapiens.UCSC.hg19.knownGene package to define transcripts and coding sequence. Here, we defined a promoter to be 900bp upstream and 100bp downstream of the transcription start site.
+
+```{r}
+library(TxDb.Hsapiens.UCSC.hg19.knownGene)
+txdb <- TxDb.Hsapiens.UCSC.hg19.knownGene
+
+# The following is the method of subsetting a txdb database
+
+# get transcript on chr22
+gr <- GRanges(seqnames = "chr22", ranges = IRanges(start = 1, end = 52330658))
+gr.trans.chr22 <- subsetByOverlaps(transcripts(txdb), gr, ignore.strand = TRUE)
+
+# get promoters on chr22
+proms <- promoters(gr.trans.chr22, upstream = 900, downstream = 100)
+
+# get coding sequence on chr22
+cdseq <- subsetByOverlaps(cdsby(txdb), gr, ignore.strand = TRUE)
+
+# get promoters that have coding sequence
+proms_cds <- findOverlaps(proms, cdseq)
+unique(queryHits(proms_cds))
+
+# count
+count = 0
+for (i in unique(queryHits(proms_cds))){
+  proms_cds_vi <- Views(Hsapiens, proms[i])
+  count = count + vcountPattern("TATAAA", DNAStringSet(proms_cds_vi))
+}
+count
+
+```
 
 
 
